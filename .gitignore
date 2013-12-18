@@ -1,4 +1,4 @@
 *~
 *.swp
 *.swo
-node_modules/*
+controller/node_modules/*
