@@ -1,0 +1,15 @@
+{
+  "name": "SpectaBot",
+  "version": "0.0.0",
+  "description": "Auto-spectates TagPro games for scripting",
+  "main": "index.coffee",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "phantom": "~0.5.4"
+  },
+  "repository": "",
+  "author": "JJJollyjim (✈)",
+  "license": "GPLv3"
+}
