@@ -85,8 +85,11 @@ class Bot
 					players = {}
 					importantKeys = ["name", "score"]
 
+					nextInterval = setInterval ->
+						gamesocket.emit "next"
+					, 1000
+
 					gamesocket.on "p", (updates) =>
-						console.log "recv p #{updates.length}"
 						for update in updates
 							# Add the player to the object if not already there
 							if update.id not of players
@@ -96,16 +99,32 @@ class Bot
 							# Get a local copy of the player object
 							player = players[update.id]
 
-							# Loop the keys we want to save and store them if they're in the update
+							# Loop the keys we want to save
 							for key in importantKeys
+								# If this update contains it, update the player
 								if key of update
 									player[key] = update[key]
-									console.log "Set #{update.id}'s #{key} to #{update[key]}"
+
+					gamesocket.on "playerLeft", (id) =>
+						console.log "Player left (#{id})"
+
+						delete players[id] if id of players
 
 					gamesocket.on "end", (data) =>
 						console.log players, data.winner
 						console.log "Disconnecting…"
+						
+						# Stop sending "next" events
+						clearInterval(nextInterval)
+
+						# Close all connections
 						gamesocket.disconnect()
+						socket.disconnect()
+
+						console.log "Exiting…"
+						setTimeout -> # Delay to let stuff close properly
+							process.exit(0)
+						, 1000
 
 				gamesocket.on "error", =>
 					process.send
@@ -122,10 +141,10 @@ class Bot
 					details: "Error joining game (#{@server}//#{@group}//games/find)"
 				throw new Error "Error joining game"
 
-		socket.on "disconnect", ->
+		socket.on "disconnect", =>
 			console.log "Disconnected from #{@server}//#{@group}"
 
-		socket.on "error", (err) ->
+		socket.on "error", (err) =>
 			console.log err
 			callback "Socket.io error on #{@server}//#{@group}"
 
