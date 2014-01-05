@@ -12,7 +12,7 @@
     "lodash": "~2.4.1",
     "irc": "~0.3.6",
     "nodemailer": "~0.6.0",
-    "csv": "~0.1.2"
+    "csv": "~0.3.6"
   },
   "repository": "",
   "author": "JJJollyjim (✈)",
