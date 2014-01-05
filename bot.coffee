@@ -1,11 +1,12 @@
-_      = require "lodash"
-io     = require "socket.io-client"
-http   = require "http"
-pjson  = require "./package.json"
-cookie = require "cookie"
+_       = require "lodash"
+io      = require "socket.io-client"
+http    = require "http"
+pjson   = require "./package.json"
+cookie  = require "cookie"
 
 class Bot
 	constructor: (@server, @group) ->
+		# Stub to save server and group to @
 
 	getSession: (callback) ->
 		http.get "http://tagpro-#{@server}.koalabeast.com/", (res) =>
@@ -47,7 +48,7 @@ class Bot
 
 		socket.on "you", (uid) =>
 			# Set name
-			@botname = "Specta|#{uid[0..4]}"
+			@botname = "SpectaBot##{uid[0..1]}"
 			socket.emit "name", @botname
 
 			# Send a status message
@@ -69,8 +70,6 @@ class Bot
 				console.log "Connected to #{@server}//#{@group}//games/find"
 
 			joinsocket.on "FoundWorld", _.once (data) =>
-				console.log data.url
-
 				@location = "game"
 				@heartbeat()
 
@@ -83,7 +82,7 @@ class Bot
 					console.log "Connected to game"
 
 					players = {}
-					importantKeys = ["name", "score"]
+					importantKeys = ["name", "score", "s-tags", "s-pops", "s-grabs", "s-returns", "s-captures", "s-drops", "s-support", "s-hold", "s-prevent"]
 
 					nextInterval = setInterval ->
 						gamesocket.emit "next"
@@ -111,20 +110,34 @@ class Bot
 						delete players[id] if id of players
 
 					gamesocket.on "end", (data) =>
-						console.log players, data.winner
 						console.log "Disconnecting…"
 						
 						# Stop sending "next" events
 						clearInterval(nextInterval)
 
-						# Close all connections
+						# Disconnect from game
 						gamesocket.disconnect()
-						socket.disconnect()
 
-						console.log "Exiting…"
-						setTimeout -> # Delay to let stuff close properly
-							process.exit(0)
-						, 1000
+						# Send results to the parent display
+						process.send
+							cmd: "results"
+							results: players
+
+						sendCount = 0
+
+						sendDisconnect = ->
+							socket.emit "chat", "SpectaBot is now leaving the group!"
+							setTimeout ->
+								socket.emit "chat", "If it is required for another game in this group please bring it back in with IRC before the next game starts!"
+							, 500
+
+							if sendCount++ > 3
+								clearInterval sendTimerID
+								socket.disconnect
+
+
+						sendTimerID = setInterval(sendDisconnect, 4000)
+						
 
 				gamesocket.on "error", =>
 					process.send
